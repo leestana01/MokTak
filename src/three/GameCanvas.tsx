@@ -158,9 +158,29 @@ function GameLoop() {
             if (st.tutorialStep === 2) st.setTutorialStep(3)
             break
           }
-          case 'mandalaBlast': {
-            sfx.mandalaBlast()
-            screenFlash('gold')
+          case 'totemPlace': {
+            sfx.totemPlace()
+            particleBus.spawn({ x: ev.x, y: 0.6, z: ev.z, n: 16, color: '#ffca7a', speed: 3, up: 3, life: 0.7 })
+            break
+          }
+          case 'totemPulse': {
+            sfx.totemPulse()
+            break
+          }
+          case 'healTick': {
+            sfx.heal()
+            const p = world.player
+            project(p.pos.x, 1.6, p.pos.z)
+            pushFx({ sx: projV.x, sy: projV.y, text: `+${ev.amount}`, kind: 'heal' })
+            particleBus.spawn({ x: p.pos.x, y: 0.4, z: p.pos.z, n: 5, color: '#ffb7c9', speed: 1.4, up: 2.4, gravity: 1, life: 0.7 })
+            break
+          }
+          case 'bossPhase': {
+            sfx.bossPhase()
+            haptics.bossIntro()
+            screenFlash('hit')
+            const bd = BOSSES[ev.boss]
+            st.addToast(`${bd.name}의 번뇌가 폭주합니다!`)
             break
           }
           case 'nirvana': {

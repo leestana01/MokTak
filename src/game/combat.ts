@@ -105,56 +105,6 @@ export function stepPlayer(dt: number) {
     p.pos.z = (p.pos.z / r) * maxR
   }
 
-  // --- 금강연타 펄스 ---
-  if (t < p.skill1Until && t >= p.skill1NextPulse) {
-    p.skill1NextPulse = t + 0.18
-    const pr = 3.6 * (world.nirvana ? 1.25 : 1)
-    emit({ type: 'shock', x: p.pos.x, z: p.pos.z, r: pr, color: '#ffd98a' })
-    emit({ type: 'moktak', combo: world.combo })
-    for (const e of world.enemies) {
-      if (e.dying) continue
-      const d = Math.hypot(e.pos.x - p.pos.x, e.pos.z - p.pos.z)
-      if (d < pr + e.radius) {
-        dir.set(e.pos.x - p.pos.x, 0, e.pos.z - p.pos.z).normalize()
-        damageEnemy(e, atkNow() * 0.55 * p.stats.skillMult, dir.x, dir.z, 0.5)
-      }
-    }
-    addShake(0.12)
-  }
-
-  // --- 만다라 폭진 ---
-  const m = world.mandala
-  if (m.active) {
-    m.t += dt
-    if (m.t < 1.15) {
-      for (const e of world.enemies) {
-        if (e.dying || e.boss) continue
-        dir.set(m.pos.x - e.pos.x, 0, m.pos.z - e.pos.z)
-        const d = dir.length()
-        if (d < 7.5 && d > 0.4) {
-          dir.divideScalar(d)
-          e.pos.x += dir.x * 3.6 * dt
-          e.pos.z += dir.z * 3.6 * dt
-        }
-      }
-    } else {
-      m.active = false
-      const br = 6.5
-      emit({ type: 'mandalaBlast', x: m.pos.x, z: m.pos.z })
-      emit({ type: 'shock', x: m.pos.x, z: m.pos.z, r: br, color: '#ffca7a' })
-      emit({ type: 'spark', x: m.pos.x, y: 0.5, z: m.pos.z, color: '#ffb7c9', n: 40, power: 1.4 })
-      pushRing(m.pos.x, m.pos.z, 10, 12, 0.8, 0, false, '#ffd98a')
-      addShake(0.7)
-      for (const e of world.enemies) {
-        if (e.dying) continue
-        const d = Math.hypot(e.pos.x - m.pos.x, e.pos.z - m.pos.z)
-        if (d < br + e.radius) {
-          dir.set(e.pos.x - m.pos.x, 0, e.pos.z - m.pos.z).normalize()
-          damageEnemy(e, atkNow() * 3.2 * p.stats.skillMult, dir.x, dir.z, 2.2, 0.6)
-        }
-      }
-    }
-  }
 }
 
 export function tryBasicAttack() {
@@ -256,17 +206,24 @@ export function castSkill(i: number) {
   emit({ type: 'skill', id: (i + 1) as 1 | 2 | 3 })
 
   if (i === 0) {
-    // 금강연타
-    p.skill1Until = t + 1.05
-    p.skill1NextPulse = t
+    // 공명 목탁비석 (설치기): 8초간 주변 번뇌를 자동 타격하는 비석을 세운다
+    world.totem.pos.copy(p.pos)
+    world.totem.until = t + 8
+    world.totem.nextPulse = t + 0.35
+    world.totem.active = true
+    emit({ type: 'totemPlace', x: p.pos.x, z: p.pos.z })
   } else if (i === 1) {
-    // 만다라 폭진
-    world.mandala.pos.copy(p.pos)
-    world.mandala.t = 0
-    world.mandala.active = true
+    // 연화 회복진 (회복기): 5초간 만다라 위에 서 있으면 체력 회복
+    world.healZone.pos.copy(p.pos)
+    world.healZone.until = t + 5
+    world.healZone.nextTick = t + 0.4
+    world.healZone.active = true
+    emit({ type: 'spark', x: p.pos.x, y: 0.4, z: p.pos.z, color: '#ffb7c9', n: 22, power: 1.2 })
   } else {
-    // 해탈의 종
+    // 해탈의 종 (궁극기): 광역 피해 + 보스 대경직 + 회피 초기화 + 찰나의 무적
     world.slowUntil = t + 1.1
+    p.iframesUntil = Math.max(p.iframesUntil, t + 1.5)
+    p.dodgeReadyAt = t
     addShake(0.55)
     pushRing(p.pos.x, p.pos.z, 14, 9, 1, 0, false, '#9fd0ff')
     pushRing(p.pos.x, p.pos.z, 14, 6.5, 1, 0, false, '#ffd98a')
@@ -276,7 +233,7 @@ export function castSkill(i: number) {
       const d = Math.hypot(e.pos.x - p.pos.x, e.pos.z - p.pos.z)
       if (d < 10 + e.radius) {
         dir.set(e.pos.x - p.pos.x, 0, e.pos.z - p.pos.z).normalize()
-        damageEnemy(e, atkNow() * 2.2 * p.stats.skillMult, dir.x, dir.z, 1.2, e.boss ? 2.6 : 2.0)
+        damageEnemy(e, atkNow() * 2.6 * p.stats.skillMult, dir.x, dir.z, 1.2, e.boss ? 2.8 : 2.0)
       }
     }
   }

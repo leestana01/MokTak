@@ -29,17 +29,23 @@ export interface PlayerState {
   charging: boolean
   chargeLevel: number
   skillReadyAt: number[]
-  skill1Until: number
-  skill1NextPulse: number
   slowUntil: number
   regenT: number
   stats: PlayerStats
   moving: boolean
 }
 
-export interface MandalaBlast {
+export interface TotemState {
   pos: THREE.Vector3
-  t: number
+  until: number
+  nextPulse: number
+  active: boolean
+}
+
+export interface HealZoneState {
+  pos: THREE.Vector3
+  until: number
+  nextTick: number
   active: boolean
 }
 
@@ -67,7 +73,8 @@ export interface WorldState {
   shake: number
   cinematicT: number
   bossEnt: EnemyEntity | null
-  mandala: MandalaBlast
+  totem: TotemState
+  healZone: HealZoneState
   killsThisRun: number
   suEarned: number
   damageTaken: number
@@ -123,8 +130,6 @@ export const world: WorldState = {
     charging: false,
     chargeLevel: 0,
     skillReadyAt: [0, 0, 0],
-    skill1Until: 0,
-    skill1NextPulse: 0,
     slowUntil: 0,
     regenT: 0,
     stats: defaultStats(),
@@ -141,7 +146,8 @@ export const world: WorldState = {
   shake: 0,
   cinematicT: 0,
   bossEnt: null,
-  mandala: { pos: new THREE.Vector3(), t: 0, active: false },
+  totem: { pos: new THREE.Vector3(), until: 0, nextPulse: 0, active: false },
+  healZone: { pos: new THREE.Vector3(), until: 0, nextTick: 0, active: false },
   killsThisRun: 0,
   suEarned: 0,
   damageTaken: 0,
@@ -290,7 +296,7 @@ export function pushZone(
   }
   const idx = world.zones.findIndex((p) => !p.active)
   if (idx >= 0) world.zones[idx] = zn
-  else if (world.zones.length < 24) world.zones.push(zn)
+  else if (world.zones.length < 40) world.zones.push(zn)
 }
 
 export function pushRing(
@@ -367,7 +373,8 @@ export function startStageRun(stageId: number, stats: PlayerStats, firstRun: boo
   world.shake = 0
   world.cinematicT = 0
   world.bossEnt = null
-  world.mandala.active = false
+  world.totem.active = false
+  world.healZone.active = false
   world.killsThisRun = 0
   world.suEarned = 0
   world.damageTaken = 0
@@ -390,7 +397,6 @@ export function startStageRun(stageId: number, stats: PlayerStats, firstRun: boo
   p.charging = false
   p.chargeLevel = 0
   p.skillReadyAt = [0, 0, 0]
-  p.skill1Until = 0
   p.slowUntil = 0
   p.regenT = 0
 
@@ -586,6 +592,15 @@ function stepBoss(e: EnemyEntity, dt: number, dist: number, dx: number, dz: numb
 
   if (e.state === 'intro') return
 
+  // 2페이즈: 체력 50% 이하 — 패턴이 흉흉해진다
+  if (!e.phase2 && e.hp < e.maxHp * 0.5) {
+    e.phase2 = true
+    e.hasteMult = Math.min(1.9, e.hasteMult * 1.12)
+    e.patternT = Math.min(e.patternT, 0.7)
+    addShake(0.6)
+    emit({ type: 'bossPhase', boss: e.boss! })
+  }
+
   if (e.state === 'chase') {
     if (dist > e.radius + 1.2) {
       e.pos.x += dx * spd * dt
@@ -597,11 +612,13 @@ function stepBoss(e: EnemyEntity, dt: number, dist: number, dx: number, dz: numb
     }
     e.patternT -= dt * e.hasteMult
     if (e.patternT <= 0) {
-      e.pattern = def.patterns[e.patternIdx % def.patterns.length]
+      const list = e.phase2 ? def.patterns2 : def.patterns
+      e.pattern = list[e.patternIdx % list.length]
       e.patternIdx += 1
       e.state = 'pattern'
       e.stateT = 0
       e.volleys = 0
+      e.auxA = 0
     }
     return
   }
@@ -711,6 +728,59 @@ function stepBoss(e: EnemyEntity, dt: number, dist: number, dx: number, dz: numb
         emit({ type: 'toast', text: '거울 속에서 당신의 그림자가 걸어 나옵니다.' })
       }
       endPattern(0.9)
+      break
+    }
+    case 'spiral': {
+      // 회전 나선 탄막
+      if (t < dt) e.auxA = Math.random() * Math.PI * 2
+      const dur = e.phase2 ? 2.4 : 2.0
+      if (t < dur && t * 11 > e.volleys) {
+        e.volleys += 1
+        const a = e.auxA + e.volleys * 0.44
+        const arms = e.phase2 ? [0, Math.PI * 0.66, Math.PI * 1.33] : [0, Math.PI]
+        for (const off of arms) {
+          pushProjectile(e.pos.x, e.pos.z, Math.cos(a + off) * 6, Math.sin(a + off) * 6, e.dmg, def.accent)
+        }
+      }
+      endPattern(dur + 0.3)
+      break
+    }
+    case 'volley': {
+      // 플레이어 조준 연사
+      const shots = e.phase2 ? 4 : 3
+      if (e.volleys < shots && t >= e.volleys * 0.45) {
+        e.volleys += 1
+        const base = Math.atan2(p.pos.z - e.pos.z, p.pos.x - e.pos.x)
+        for (const off of [-0.17, 0, 0.17]) {
+          pushProjectile(e.pos.x, e.pos.z, Math.cos(base + off) * 8.2, Math.sin(base + off) * 8.2, e.dmg, def.accent)
+        }
+      }
+      endPattern(shots * 0.45 + 0.5)
+      break
+    }
+    case 'cross': {
+      // 십자/방사 광선진: 보스 중심에서 뻗어나가는 장판 라인
+      if (t < dt) {
+        const arms = e.phase2 ? 6 : 4
+        const base = Math.random() * Math.PI * 2
+        for (let i = 0; i < arms; i++) {
+          const a = base + (i / arms) * Math.PI * 2
+          for (const r of [2.4, 4.9, 7.4, 9.9]) {
+            pushZone(e.pos.x + Math.cos(a) * r, e.pos.z + Math.sin(a) * r, 1.7, 1.0, 0, e.dmg, false, def.accent)
+          }
+        }
+      }
+      endPattern(1.3)
+      break
+    }
+    case 'chase': {
+      // 플레이어 발밑을 쫓아오는 연속 장판
+      const n = e.phase2 ? 6 : 5
+      if (e.volleys < n && t >= e.volleys * 0.33) {
+        e.volleys += 1
+        pushZone(p.pos.x, p.pos.z, 2.0, 0.75, 0, e.dmg, false, def.accent)
+      }
+      endPattern(n * 0.33 + 0.9)
       break
     }
     case 'haste': {
@@ -900,6 +970,44 @@ export function stepWorld(rawDt: number) {
       }
     }
     if (rg.r >= rg.maxR) rg.active = false
+  }
+
+  // 공명 목탁비석 (설치기): 주기적으로 주변 번뇌를 자동 타격
+  const tt = world.totem
+  if (tt.active) {
+    if (world.time >= tt.until) {
+      tt.active = false
+    } else if (world.time >= tt.nextPulse) {
+      tt.nextPulse = world.time + 0.75
+      emit({ type: 'totemPulse', x: tt.pos.x, z: tt.pos.z })
+      emit({ type: 'shock', x: tt.pos.x, z: tt.pos.z, r: 3.4, color: '#ffca7a' })
+      for (const e of world.enemies) {
+        if (e.dying || e.state === 'intro') continue
+        const d = Math.hypot(e.pos.x - tt.pos.x, e.pos.z - tt.pos.z)
+        if (d < 3.4 + e.radius) {
+          const nx = (e.pos.x - tt.pos.x) / (d || 1)
+          const nz = (e.pos.z - tt.pos.z) / (d || 1)
+          damageEnemy(e, atkNow() * 0.6 * p.stats.skillMult, nx, nz, 0.45)
+        }
+      }
+    }
+  }
+
+  // 연화 회복진 (회복기): 만다라 위에 서 있으면 체력 회복
+  const hz = world.healZone
+  if (hz.active) {
+    if (world.time >= hz.until) {
+      hz.active = false
+    } else if (world.time >= hz.nextTick) {
+      hz.nextTick = world.time + 0.5
+      const inside = Math.hypot(hz.pos.x - p.pos.x, hz.pos.z - p.pos.z) < 3.0
+      if (inside && p.hp > 0 && p.hp < p.maxHp) {
+        const amount = Math.round(4 + p.maxHp * 0.02)
+        p.hp = Math.min(p.maxHp, p.hp + amount)
+        addGauge(1.5)
+        emit({ type: 'healTick', amount })
+      }
+    }
   }
 
   // 연꽃 부적: 저체력 회복

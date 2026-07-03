@@ -31,6 +31,7 @@ export interface BossDef {
   color: string
   accent: string
   patterns: BossPatternId[]
+  patterns2: BossPatternId[] // 2페이즈(체력 50% 이하) 패턴
   patternInterval: number
 }
 
@@ -43,6 +44,10 @@ export type BossPatternId =
   | 'rings'
   | 'mirror'
   | 'haste'
+  | 'spiral' // 회전 나선 탄막
+  | 'cross' // 십자/방사 광선진 (장판 라인)
+  | 'volley' // 플레이어 조준 연사
+  | 'chase' // 플레이어를 쫓아오는 연속 장판
 
 export interface WaveDef {
   spawns: { kind: EnemyKindId; count: number }[]
@@ -143,7 +148,10 @@ export type GameEvent =
   | { type: 'chargeRelease'; level: number; x: number; z: number }
   | { type: 'nirvana' }
   | { type: 'nirvanaEnd' }
-  | { type: 'mandalaBlast'; x: number; z: number }
+  | { type: 'totemPulse'; x: number; z: number }
+  | { type: 'totemPlace'; x: number; z: number }
+  | { type: 'healTick'; amount: number }
+  | { type: 'bossPhase'; boss: BossId }
   | { type: 'bossIntro'; boss: BossId }
   | { type: 'bossDown'; x: number; z: number }
   | { type: 'wave'; index: number; total: number }
@@ -190,6 +198,8 @@ export interface EnemyEntity {
   pattern: BossPatternId | 'idle'
   hasteMult: number
   volleys: number
+  phase2: boolean
+  auxA: number // 패턴용 보조 각도/타이머
 }
 
 export interface Projectile {

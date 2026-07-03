@@ -4,17 +4,79 @@ import * as THREE from 'three'
 import { world } from '../game/world'
 
 const RING_POOL = 20
-const ZONE_POOL = 24
+const ZONE_POOL = 40
 const PROJ_POOL = 48
 
-// 공명 충격파 링 + 위험 장판 + 번뇌탄 렌더 풀
+// 공명 충격파 링 + 위험 장판 + 번뇌탄 + 목탁비석 렌더 풀
 export function Effects() {
   return (
     <>
       <RingPool />
       <ZonePool />
       <ProjectilePool />
+      <TotemView />
     </>
+  )
+}
+
+// 공명 목탁비석 (설치 스킬)
+function TotemView() {
+  const g = useRef<THREE.Group>(null!)
+  const glowMat = useRef<THREE.MeshBasicMaterial>(null!)
+
+  useFrame((state) => {
+    const grp = g.current
+    if (!grp) return
+    const tt = world.totem
+    if (!tt.active) {
+      grp.visible = false
+      return
+    }
+    const t = state.clock.elapsedTime
+    grp.visible = true
+    grp.position.set(tt.pos.x, 0, tt.pos.z)
+    const remain = Math.max(0, tt.until - world.time)
+    const born = Math.min(1, (8 - remain) * 5)
+    grp.scale.setScalar(born)
+    // 펄스 직전에 부풀었다가 터진다
+    const pulse = Math.max(0, 1 - (tt.nextPulse - world.time) / 0.75)
+    grp.children[1]?.scale.setScalar(1 + pulse * 0.25)
+    grp.rotation.y = t * 0.8
+    if (glowMat.current) glowMat.current.opacity = 0.35 + pulse * 0.5
+  })
+
+  return (
+    <group ref={g} visible={false}>
+      {/* 돌기둥 */}
+      <mesh position={[0, 0.55, 0]}>
+        <cylinderGeometry args={[0.16, 0.26, 1.1, 8]} />
+        <meshStandardMaterial color="#4a4038" roughness={0.85} flatShading />
+      </mesh>
+      {/* 위에 얹힌 목탁 */}
+      <mesh position={[0, 1.3, 0]} scale={[1, 0.85, 1]}>
+        <sphereGeometry args={[0.34, 14, 10]} />
+        <meshStandardMaterial
+          color="#8a5a2a"
+          roughness={0.5}
+          emissive="#ffca7a"
+          emissiveIntensity={0.8}
+        />
+      </mesh>
+      {/* 발밑 글로우 링 */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]}>
+        <ringGeometry args={[0.5, 0.75, 28]} />
+        <meshBasicMaterial
+          ref={glowMat}
+          color="#ffca7a"
+          transparent
+          opacity={0.4}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+      <pointLight position={[0, 1.4, 0]} color="#ffca7a" intensity={5} distance={7} decay={2} />
+    </group>
   )
 }
 

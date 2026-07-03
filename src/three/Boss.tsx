@@ -70,7 +70,8 @@ export function BossMesh({ entity }: { entity: EnemyEntity }) {
 
     // 패턴 시전 중 몸체 강조
     const casting = entity.state === 'pattern'
-    accentMat.emissiveIntensity = casting ? 2.6 + Math.sin(clock * 18) * 0.8 : 1.4
+    const base = entity.phase2 ? 2.4 : 1.4
+    accentMat.emissiveIntensity = casting ? base + 1.2 + Math.sin(clock * 18) * 0.8 : base
     if (entity.dying) accentMat.opacity = 1 - Math.min(1, entity.dieT / 2)
     else accentMat.opacity = 1
   })

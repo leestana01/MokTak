@@ -145,10 +145,24 @@ export const sfx = {
       noise(1.2, { gain: 0.06, freq: 300, type: 'lowpass' })
     }
   },
-  mandalaBlast() {
-    tone(70, 0.6, { gain: 0.42, slideTo: 36 })
-    bellTone(150, 1.6, 0.2)
-    noise(0.35, { gain: 0.22, freq: 1200, slideTo: 150, type: 'lowpass' })
+  totemPlace() {
+    tone(180, 0.3, { gain: 0.24, type: 'triangle', slideTo: 90 })
+    tone(740, 0.12, { gain: 0.16, delay: 0.08 })
+    noise(0.15, { gain: 0.12, freq: 500, type: 'lowpass' })
+  },
+  totemPulse() {
+    // 비석의 자동 목탁음: 본체보다 낮고 조용하게
+    tone(540, 0.08, { gain: 0.14 })
+    tone(880, 0.04, { gain: 0.06 })
+  },
+  heal() {
+    tone(660, 0.28, { gain: 0.07 })
+    tone(990, 0.3, { gain: 0.05, delay: 0.07 })
+  },
+  bossPhase() {
+    bellTone(70, 2.6, 0.26)
+    tone(140, 0.8, { gain: 0.2, type: 'triangle', slideTo: 55 })
+    noise(0.9, { gain: 0.14, freq: 180, type: 'lowpass' })
   },
   nirvana() {
     bellTone(96, 3.6, 0.26)

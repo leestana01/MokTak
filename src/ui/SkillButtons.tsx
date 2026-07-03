@@ -3,7 +3,7 @@ import { pressSkill } from '../game/controls'
 import { ensureAudio } from '../game/audio'
 import { useStore } from '../game/store'
 
-const SHORT_NAMES = ['금강\n연타', '만다라\n폭진', '해탈의\n종']
+const SHORT_NAMES = ['목탁\n비석', '연화\n회복진', '해탈의\n종']
 
 // 스킬 버튼 3개 (액션 클러스터 위쪽)
 export function SkillButtons() {

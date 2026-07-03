@@ -112,5 +112,7 @@ export function makeEnemy(
     pattern: 'idle',
     hasteMult: 1,
     volleys: 0,
+    phase2: false,
+    auxA: 0,
   }
 }

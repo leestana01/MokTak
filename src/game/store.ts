@@ -98,7 +98,7 @@ export const useStore = create<UIStore>((set, get) => ({
   bossMaxHp: 1,
   bossIntro: null,
   skillCdLeft: [0, 0, 0],
-  skillCdTotal: [7, 12, 20],
+  skillCdTotal: [10, 14, 22],
   dodgeCdLeft: 0,
   charging: false,
   chargeLevel: 0,

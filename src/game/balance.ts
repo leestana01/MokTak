@@ -140,23 +140,23 @@ export function getStats(save: SaveData): PlayerStats {
 export const SKILL_DEFS = [
   {
     id: 1,
-    key: 'geumgang',
-    name: '금강연타',
-    desc: '주변에 목탁 공명 파동을 연속으로 터뜨린다.',
-    cd: 7,
+    key: 'totem',
+    name: '공명 목탁비석',
+    desc: '자리에 목탁 비석을 세운다. 8초간 스스로 울리며 주변 번뇌를 자동 타격한다.',
+    cd: 10,
   },
   {
     id: 2,
-    key: 'mandala',
-    name: '만다라 폭진',
-    desc: '바닥에 만다라를 펼쳐 번뇌를 끌어모아 폭발시킨다.',
-    cd: 12,
+    key: 'lotus',
+    name: '연화 회복진',
+    desc: '연꽃 만다라를 펼친다. 5초간 그 위에 서 있으면 체력이 회복된다.',
+    cd: 14,
   },
   {
     id: 3,
     key: 'bell',
     name: '해탈의 종',
-    desc: '시간을 붙잡는 거대한 종소리. 보스를 크게 경직시킨다.',
-    cd: 20,
+    desc: '시간을 붙잡는 종소리. 광역 피해 + 보스 대경직 + 회피 초기화 + 찰나의 무적.',
+    cd: 22,
   },
 ] as const

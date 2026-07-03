@@ -4,7 +4,7 @@ import * as THREE from 'three'
 import { world } from '../game/world'
 import { getMandalaTexture } from './textures'
 
-// 차지/해탈/만다라 폭진 시 바닥에 나타나는 만다라 문양 3장
+// 차지/해탈/연화 회복진 시 바닥에 나타나는 만다라 문양 3장
 export function MandalaField() {
   const chargeRef = useRef<THREE.Mesh>(null!)
   const nirvanaRef = useRef<THREE.Mesh>(null!)
@@ -48,17 +48,18 @@ export function MandalaField() {
       }
     }
 
-    // 만다라 폭진
+    // 연화 회복진
     const bm = blastRef.current
     if (bm && blastMat.current) {
-      const m = world.mandala
-      if (m.active) {
+      const hz = world.healZone
+      if (hz.active) {
         bm.visible = true
-        bm.position.set(m.pos.x, 0.06, m.pos.z)
-        const prog = Math.min(1, m.t / 1.15)
-        bm.scale.setScalar(2 + prog * 11)
-        bm.rotation.z = m.t * 5
-        blastMat.current.opacity = 0.35 + prog * 0.6
+        bm.position.set(hz.pos.x, 0.06, hz.pos.z)
+        const remain = Math.max(0, hz.until - world.time)
+        const grow = Math.min(1, (5 - remain) * 4)
+        bm.scale.setScalar(6.2 * grow)
+        bm.rotation.z = -t * 0.9
+        blastMat.current.opacity = (0.5 + Math.sin(t * 5) * 0.15) * Math.min(1, remain * 1.5)
       } else {
         bm.visible = false
       }
@@ -67,6 +68,7 @@ export function MandalaField() {
 
   const tex = getMandalaTexture('#ffd98a')
   const texBlue = getMandalaTexture('#9fd0ff')
+  const texLotus = getMandalaTexture('#ffb7c9')
 
   return (
     <>
@@ -98,12 +100,12 @@ export function MandalaField() {
         <planeGeometry args={[1, 1]} />
         <meshBasicMaterial
           ref={blastMat}
-          map={tex}
+          map={texLotus}
           transparent
           opacity={0}
           depthWrite={false}
           blending={THREE.AdditiveBlending}
-          color="#ffca7a"
+          color="#ffc4d4"
         />
       </mesh>
     </>
