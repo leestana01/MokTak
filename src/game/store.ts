@@ -6,6 +6,8 @@ import { stageById } from './stages'
 import { setSoundEnabled } from './audio'
 import { setHapticsEnabled } from './haptics'
 import { startStageRun, stopRun, world } from './world'
+import { STAGE_INTROS } from './story'
+import type { StoryLine } from './story'
 import type { Quality, SaveData } from './types'
 
 export interface Toast {
@@ -38,7 +40,7 @@ interface UIStore {
   bossName: string | null
   bossHp: number
   bossMaxHp: number
-  bossIntro: { name: string; title: string; intro: string } | null
+  bossIntro: { name: string; title: string; intro: string; quote: string } | null
   skillCdLeft: [number, number, number]
   skillCdTotal: [number, number, number]
   dodgeCdLeft: number
@@ -47,8 +49,9 @@ interface UIStore {
   deadline: number
   entityRev: number
   paused: boolean
-  overlay: 'none' | 'clear' | 'dead' | 'pause'
+  overlay: 'none' | 'clear' | 'dead' | 'pause' | 'ending'
   clearResult: ClearResult | null
+  story: StoryLine[] | null
   deadKarma: number
   toasts: Toast[]
   tutorialStep: number
@@ -72,6 +75,7 @@ interface UIStore {
   setTutorialStep: (n: number) => void
   finishTutorial: () => void
   closeOverlay: () => void
+  endStory: () => void
   syncSave: (fn: (s: SaveData) => void) => void
 }
 
@@ -107,6 +111,7 @@ export const useStore = create<UIStore>((set, get) => ({
   paused: false,
   overlay: 'none',
   clearResult: null,
+  story: null,
   deadKarma: 0,
   toasts: [],
   tutorialStep: -1,
@@ -120,6 +125,13 @@ export const useStore = create<UIStore>((set, get) => ({
     const firstRun = !save.tutorialDone && id === 1
     startStageRun(id, stats, firstRun)
     const stage = stageById(id)
+    const showStory = !save.seenStory.includes(id) && !!STAGE_INTROS[id]
+    if (showStory) {
+      world.paused = true
+      const newSave = { ...save, seenStory: [...save.seenStory, id] }
+      persistSave(newSave)
+      set({ save: newSave })
+    }
     set({
       screen: 'game',
       stageId: id,
@@ -137,6 +149,7 @@ export const useStore = create<UIStore>((set, get) => ({
       paused: false,
       overlay: 'none',
       clearResult: null,
+      story: showStory ? STAGE_INTROS[id] : null,
       toasts: [],
       tutorialStep: firstRun ? 0 : -1,
       entityRev: get().entityRev + 1,
@@ -155,7 +168,7 @@ export const useStore = create<UIStore>((set, get) => ({
 
   exitToHub: () => {
     stopRun()
-    set({ screen: 'hub', overlay: 'none', paused: false, bossIntro: null })
+    set({ screen: 'hub', overlay: 'none', paused: false, bossIntro: null, story: null })
   },
 
   finishStage: () => {
@@ -191,7 +204,7 @@ export const useStore = create<UIStore>((set, get) => ({
     persistSave(newSave)
     set({
       save: newSave,
-      overlay: 'clear',
+      overlay: stageId === 6 ? 'ending' : 'clear',
       clearResult: { stageId, su, gong, karma, relic },
     })
   },
@@ -284,6 +297,11 @@ export const useStore = create<UIStore>((set, get) => ({
   },
 
   closeOverlay: () => set({ overlay: 'none' }),
+
+  endStory: () => {
+    world.paused = false
+    set({ story: null })
+  },
 
   syncSave: (fn) => {
     const copy = { ...get().save }

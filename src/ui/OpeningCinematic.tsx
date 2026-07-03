@@ -3,13 +3,9 @@ import { GAME_TITLE } from '../game/config'
 import { useStore } from '../game/store'
 import { sfx } from '../game/audio'
 
-const LINES = [
-  '번뇌가 세상을 뒤덮었다.',
-  '경전은 불탔고, 종은 침묵했다.',
-  '미루기와 알림과 카드값이 산문을 넘었다.',
-  '그러나 단 하나의 소리가 남아 있으니 —',
-  '목탁.',
-]
+import { PROLOGUE_LINES } from '../game/story'
+
+const LINES = PROLOGUE_LINES
 
 // 첫 실행 오프닝: 검은 화면 위 붓글씨 텍스트 시퀀스
 export function OpeningCinematic() {

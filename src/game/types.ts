@@ -117,6 +117,7 @@ export interface SaveData {
   bossClears: Record<string, number>
   seenOpening: boolean
   tutorialDone: boolean
+  seenStory: number[]
 }
 
 export interface PlayerStats {

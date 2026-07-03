@@ -5,6 +5,8 @@ import { useStore } from '../game/store'
 import { fxQueue } from '../game/fx'
 import { sfx } from '../game/audio'
 import { haptics } from '../game/haptics'
+import { STAGE_CLEAR_LINES } from '../game/story'
+import { EndingOverlay, StoryOverlay } from './StoryOverlay'
 
 const TUTORIAL_TEXT = [
   '왼쪽을 드래그해 이동하십시오',
@@ -121,12 +123,15 @@ export function HUD() {
           <div className="boss-intro-name brush gold-text">{bossIntro.name}</div>
           <div className="boss-intro-title">{bossIntro.title}</div>
           <div className="boss-intro-desc">{bossIntro.intro}</div>
+          <div className="boss-intro-quote">{bossIntro.quote}</div>
         </div>
       )}
 
       {overlay === 'clear' && <ClearOverlay />}
       {overlay === 'dead' && <DeadOverlay />}
       {overlay === 'pause' && <PauseOverlay />}
+      {overlay === 'ending' && <EndingOverlay />}
+      <StoryOverlay />
     </>
   )
 }
@@ -181,8 +186,7 @@ function ClearOverlay() {
       <div className="panel overlay-panel">
         <div className="overlay-title brush gold-text">정화 완료</div>
         <div className="overlay-sub">
-          {stage.name}의 번뇌가 잦아들었습니다
-          {stage.boss === 'deadline' && ' — 마감이 정화되었습니다'}
+          {STAGE_CLEAR_LINES[stageId] ?? `${stage.name}의 번뇌가 잦아들었습니다`}
         </div>
         <div className="reward-rows">
           <div className="reward-row">

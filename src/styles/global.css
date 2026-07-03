@@ -713,6 +713,118 @@ button {
   }
 }
 
+.boss-intro-quote {
+  margin-top: 14px;
+  font-family: var(--serif);
+  font-size: 15px;
+  font-style: italic;
+  color: rgba(255, 210, 190, 0.9);
+  letter-spacing: 0.08em;
+  animation: fadeIn 1s 1.4s both;
+  padding: 0 30px;
+  text-align: center;
+}
+
+/* ---------- 스토리 대화 ---------- */
+.story-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 48;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 14px calc(max(24px, env(safe-area-inset-bottom)) + 12px);
+  background: linear-gradient(180deg, rgba(2, 1, 0, 0.25) 0%, transparent 30%, rgba(2, 1, 0, 0.72) 100%);
+}
+.story-box {
+  width: min(92vw, 520px);
+  padding: 18px 22px 14px;
+  animation: storyIn 0.35s ease both;
+}
+@keyframes storyIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.story-speaker {
+  font-family: var(--serif);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+.story-text {
+  font-family: var(--serif);
+  font-size: 16.5px;
+  line-height: 1.65;
+  color: #f0e8d8;
+  letter-spacing: 0.03em;
+  min-height: 54px;
+}
+.story-next {
+  margin-top: 10px;
+  text-align: right;
+  font-size: 10.5px;
+  letter-spacing: 0.2em;
+  color: rgba(232, 196, 118, 0.55);
+  animation: pulseSoft 1.6s ease-in-out infinite;
+}
+.story-skip {
+  position: absolute;
+  top: max(16px, env(safe-area-inset-top));
+  right: 18px;
+  color: rgba(232, 224, 208, 0.45);
+  font-size: 13px;
+  letter-spacing: 0.15em;
+  padding: 10px 14px;
+}
+
+/* ---------- 엔딩 시네마틱 ---------- */
+.ending-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 52;
+  background: radial-gradient(ellipse 100% 80% at 50% 50%, rgba(6, 4, 2, 0.88), rgba(0, 0, 0, 0.97));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+  animation: fadeIn 1.2s ease both;
+}
+.ending-line {
+  font-family: var(--serif);
+  font-size: clamp(19px, 5.2vw, 28px);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  line-height: 1.7;
+  text-align: center;
+  color: #ece4d2;
+  text-shadow: 0 0 26px rgba(232, 196, 118, 0.25);
+  animation: openLine 3.2s ease both;
+  max-width: 640px;
+}
+.ending-line.ending-final {
+  font-size: clamp(30px, 9vw, 54px);
+  animation: titleIn 1.6s ease both;
+}
+.ending-stats {
+  position: absolute;
+  bottom: max(40px, env(safe-area-inset-bottom));
+  text-align: center;
+  font-size: 12.5px;
+  letter-spacing: 0.18em;
+  color: rgba(232, 224, 208, 0.6);
+  line-height: 2;
+  animation: fadeIn 1.5s 1s both;
+}
+
 /* ---------- 토스트 ---------- */
 .toast-wrap {
   position: absolute;

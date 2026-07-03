@@ -105,7 +105,8 @@ function Hub() {
 
 function GameScreen() {
   const overlay = useStore((s) => s.overlay)
-  const controlsOn = overlay === 'none'
+  const story = useStore((s) => s.story)
+  const controlsOn = overlay === 'none' && !story
   return (
     <>
       <GameCanvas />

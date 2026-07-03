@@ -17,6 +17,7 @@ export function defaultSave(): SaveData {
     bossClears: {},
     seenOpening: false,
     tutorialDone: false,
+    seenStory: [],
   }
 }
 
@@ -34,6 +35,7 @@ export function loadSave(): SaveData {
       relics: [...(parsed.relics ?? [])],
       clearedStages: [...(parsed.clearedStages ?? [])],
       bossClears: { ...(parsed.bossClears ?? {}) },
+      seenStory: [...(parsed.seenStory ?? [])],
     }
   } catch {
     return defaultSave()

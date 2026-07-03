@@ -10,6 +10,7 @@ import { sfx } from '../game/audio'
 import { haptics } from '../game/haptics'
 import { input } from '../game/controls'
 import { particleBus, pushFx, screenFlash } from '../game/fx'
+import { BOSS_QUOTES } from '../game/story'
 import { Stage } from './Stage'
 import { Player } from './Player'
 import { EnemiesView } from './Enemy'
@@ -198,7 +199,7 @@ function GameLoop() {
             haptics.bossIntro()
             const bd = BOSSES[ev.boss]
             useStore.setState({
-              bossIntro: { name: bd.name, title: bd.title, intro: bd.intro },
+              bossIntro: { name: bd.name, title: bd.title, intro: bd.intro, quote: BOSS_QUOTES[ev.boss].entrance },
               bossName: bd.name,
               bossHp: world.bossEnt?.hp ?? 0,
               bossMaxHp: world.bossEnt?.maxHp ?? 1,
@@ -209,6 +210,8 @@ function GameLoop() {
             sfx.bossDown()
             haptics.bossClear()
             screenFlash('gold')
+            const dyingBoss = world.bossEnt?.boss
+            if (dyingBoss) st.addToast(BOSS_QUOTES[dyingBoss].dying)
             particleBus.spawn({ x: ev.x, y: 1, z: ev.z, n: 48, color: '#ffe9b0', speed: 7, up: 5, life: 1.4 })
             break
           }
